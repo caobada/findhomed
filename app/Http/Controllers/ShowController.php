@@ -5,10 +5,14 @@ use App\HomeType;
 use App\Home;
 use Illuminate\Http\Request;
 use App\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use App\Ward;
 use App\District;
 use App\Province;
 use DB;
+
+use Excel;
 use App\Http\Controllers;
 class ShowController extends Controller
 {
@@ -20,7 +24,7 @@ class ShowController extends Controller
 		$this->province = Province::orderBy('name','ASC')->get();
 	}
 	public function index(){
-	   $topviewpost = Home::orderBy('view','Desc')->limit(6)->get();
+		$topviewpost = Home::orderBy('view','Desc')->limit(6)->get();
 
 
 		$top10 = Home::orderBy('home_id','Desc')->paginate(10);
@@ -60,11 +64,92 @@ class ShowController extends Controller
 	}
 
 	public function ShowType($type){
-			$type_id = HomeType::select('id')->where('nametypelink',$type)->get();
-			$type_home =Home::where('type_id',$type_id[0]->id)->orderBy('view','Desc')->limit(6)->get();
-			$top10 = Home::where('type_id',$type_id[0]->id)->orderBy('home_id','Desc')->paginate(10);
-			$rand = Home::all()->random(3);
-			return view('subpage.main-content',['hometype'=>$this->Menu,'top6post'=>$type_home,'top10s'=>$top10,'rand'=>$rand,'province'=>$this->province]);
+		$type_id = HomeType::select('id')->where('nametypelink',$type)->get();
+		$type_home =Home::where('type_id',$type_id[0]->id)->orderBy('view','Desc')->limit(6)->get();
+		$top10 = Home::where('type_id',$type_id[0]->id)->orderBy('home_id','Desc')->paginate(10);
+		$rand = Home::all()->random(3);
+		return view('subpage.main-content',['hometype'=>$this->Menu,'top6post'=>$type_home,'top10s'=>$top10,'rand'=>$rand,'province'=>$this->province]);
+	}
+	public function Datatable(){
+		$data = Home::all();
+		return view('subpage.datatable',['data'=>$data]);
+	}
+	// Export View
+	public function export(){
+		$data = Home::all();
+		Excel::create('data', function($excel) use ($data) {
+			$excel->sheet('1', function($sheet) use ($data) {
+			$sheet->loadView('subpage.datatable',['data'=>$data,'hometype'=>$this->Menu,'province'=>$this->province]);
+			});
+		})->download('xls');
+	}
+	public function import(Request $request){
+		if($request->hasFile('excel')){
+			$excel = $request->file('excel');
+		$data = Home::all();
+		
+		try{
+			$data2 = Excel::load($excel,function($reader){
+			})->get();
+
+			return view('subpage.datatable',['data'=>$data,'data2'=>$data2]);
+		}
+		catch(\Exception $ex){
+			echo "File excel format không chính xác!";
+		}
+		}
+	}
+	// Export DB
+	public function export_db(){
+			$contact = User::select('username','password','phone','status')->get();
+			return Excel::create('data_user',function($excel) use ($contact){
+			$excel->sheet('mysheet',function($sheet) use ($contact){
+				$sheet->fromArray($contact);
+			});
+		})->export('xls');
+	}
+	public function import_db(Request $request){
+
+			if($request->hasFile('excel')){
+			$excel = $request->file('excel');
+			$data = Excel::load($excel,function($reader){
+			})->get();
+			try{
+			foreach ($data as $key => $value) {
+			 $count = User::where('username',$value->username)->get();
+				if(count($count)==0){
+					$user = new User();
+					$user->username = $value->username;
+					$user->password = Hash::make($value->password);
+					$user->status = $value->status;
+					$user->phone = $value->phone;
+					$user->save();
+				};
+			}
+			return redirect()->back()->with('alert','Thêm thành công!');
+			}
+			catch(\Exception $ex){
+				return "Không thể import file excel";
+			}
+		}
+	}
+
+
+
+
+	public function user(){
+		$user = User::all();
+		return view('subpage.user',['hometype'=>$this->Menu,'province'=>$this->province,'user'=>$user]);
+	}
+
+	public function manager(){
+		if(Auth::check()){
+		$data = Home::where('user_id',Auth::user()->id)->get();
+
+		return view('subpage.manager',['hometype'=>$this->Menu,'province'=>$this->province,'data'=>$data]);
+	}else{
+		return redirect("/");
+	}
 	}
 
 }

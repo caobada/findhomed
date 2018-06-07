@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\HomeType;
 use App\Province;
@@ -18,37 +18,46 @@ class PostController extends Controller
 	}
     //
     public function index(){
+        if(Auth::check())
     	return view('subpage.post-home',['hometype'=>$this->Menu,'province'=>$this->province]);
+    else return redirect('/');
     }
     public function store(Request $request){
-    	 $title = $request->title;
-    	 $hometype = $request->hometype;
-    	 $phone = $request->phone;
-         $doituong=$request->doituong;
+         $data = new Home();
+
+    	 $data->title = $request->title;
+    	 $data->type_id = $request->hometype;
+    	 $data->phone_home = $request->phone;
+         $data->doituong = $request->doituong;
     	 $price = $request->price;
+         $data->user_id = Auth::user()->id;
     	 $pricetype = $request->pricetype;
-    	 $price=$price.'@'.$pricetype;
-    	 $area = $request->area;
-    	 $province= $request->province;
-    	 $district =$request->district;
-    	 $img =  implode(';', $_FILES['img']['name']);
+    	 $data->price=$price.'@'.$pricetype;
+    	 $data->area = $request->area;
+    	 $data->city= $request->province;
+    	 $data->district =$request->district;
+    	 
     	 $address = $request->address;
     	 $address = explode(',', $address);
-    	 $address =  $address[0].','.$address[1];
-    	 $desc = $request->desc;
+    	 $data->street =  $address[0].','.$address[1];
+    	 $data->desc = $request->desc;
+         $data->view =0;
+    
 
+
+
+         if(isset($_FILES['img'])){
     	 $file = $_FILES['img']['name'];
-    	 
+    	 $data->image =  implode(';', $_FILES['img']['name']);
     	for($i=0;$i<count($file);$i++){
           
     	 	move_uploaded_file($_FILES['img']['tmp_name'][$i],'images/home/'.$file[$i]);
     	 }
-    	 
-    	 $data = ['title'=>$title,'type_id'=>$hometype,'user_id'=>1,'phone_home'=>$phone,'price'=>$price,'area'=>$area,'city'=>$province,'district'=>$district,'street'=>$address,'view'=>'0','doituong'=>$doituong,'desc'=>$desc,'image'=>$img];
-    	 
-    	 
-    	Home::insert($data);
-    	return redirect('/');
+        }else{
+            $data->image =  "findhomed.png";
+        }
+         $data->save();
+       	return redirect('/');
 
     }
 }

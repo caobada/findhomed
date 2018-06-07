@@ -31,11 +31,13 @@ class SearchController extends Controller
     		else if($area==2) $a=$a->where('area','>','10')->where('area','<','30');
     	 	else   $a=$a->where('area','>','30');
     	 }	
-
-         if(isset($_GET['page'])) {$a=$a;}
         
-         
+
+        try{         
     	  return view('subpage.search-home',['search'=>$a,'hometype'=>$this->Menu,'province'=>$this->province]);
+        }catch(\Exception $ex){
+            return "Có lỗi xảy ra!";
+        }
 
     	   
     }

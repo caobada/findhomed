@@ -8,27 +8,51 @@
       margin-left: auto;
   }
 
-  .a .row {
-
+  .info{
+    color:red;
+    font-size: 13px;
   }
+
   .motachitiet{
     border: 1px solid #ddd !important;
     padding: 10px 20px;
   }
+  .login-social{
+
+  }
 
   .Item {
+      height: 180px;
       font-size: 14px;
       margin: 0px 0px 20px 0px;
       padding: 0px 10px 10px 0px;
       border-bottom: 1px solid #F85A16;
   }
-
+  .btn{
+    padding: 10px 10px 10px 10px;
+    color: #fff;
+  }
+  .btn-facebook
+  {
+    margin-top: 15px;
+    background-color:#3b5998;
+  }
+  .btn-google
+  {
+    text-align: left;
+    width: 197px;
+    margin-top: 10px;
+    background-color: #c23321;
+  }
+  
   .Item a {
       color: #994f00 !important;
       font-size: 16px;
       font-weight: bold;
   }
-
+  .modal-body{
+    float: left;
+  }
   .media-body {
       padding-left: 5px;
   }
